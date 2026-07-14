@@ -194,7 +194,7 @@ def admin_login():
             session['is_admin'] = True
             return redirect(url_for('admin_dashboard'))
         else:
-            error = 'Sai mật khẩu quản trị!'
+            error = 'Sai mật khẩu mất rồi bé ơi!'
             
     return render_template('admin.html', view='login', error=error)
 
@@ -295,7 +295,7 @@ def login():
         return redirect(next_url if next_url else url_for('dashboard'))
 
     return render_template('index.html',
-        error='Sai tên đăng nhập hoặc mật khẩu!',
+        error='Điền cho đúng đi mấy má ơi!',
         tab='login',
         next_url=next_url)
 
