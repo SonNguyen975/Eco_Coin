@@ -20,6 +20,11 @@ app = Flask(__name__)
 # Trên Railway: đặt biến SECRET_KEY trong Settings > Variables
 app.secret_key = os.environ.get('SECRET_KEY', 'eco_coin_super_secret_key_local_only')
 
+# Khởi tạo database ngay khi app load
+# Dùng app_context() để hoạt động với cả gunicorn (Railway) và python app.py (local)
+with app.app_context():
+    init_db()
+
 # ==============================================================
 # BẢNG GIÁ VẬT LIỆU
 # ==============================================================
