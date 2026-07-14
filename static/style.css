@@ -38,7 +38,7 @@
 html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -124,7 +124,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,210,120,0.5); }
 
 /* ── TYPOGRAPHY ── */
-h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; font-family: 'Space Grotesk', 'Outfit', sans-serif; }
+h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif; }
 a { color: var(--primary); text-decoration: none; }
 a:hover { color: var(--primary-light); }
 
@@ -159,7 +159,7 @@ a:hover { color: var(--primary-light); }
     font-size: 18px; font-weight: 800; letter-spacing: -0.3px;
     color: var(--text);
     text-decoration: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .nav-brand:hover { color: var(--text); }
 .nav-logo { font-size: 22px; }
@@ -186,7 +186,7 @@ a:hover { color: var(--primary-light); }
 .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 12px 24px; border-radius: var(--radius-sm);
-    font-size: 15px; font-weight: 700; font-family: 'Outfit', inherit;
+    font-size: 15px; font-weight: 700; font-family: 'Be Vietnam Pro', inherit;
     cursor: pointer; border: none; transition: var(--transition);
     text-decoration: none; white-space: nowrap; letter-spacing: 0.2px;
     position: relative; overflow: hidden;
@@ -472,7 +472,7 @@ a:hover { color: var(--primary-light); }
     margin-bottom: 20px; position: relative; z-index: 1;
 }
 .wallet-greeting { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: 0.5px; }
-.wallet-username { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Space Grotesk', sans-serif; }
+.wallet-username { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif; }
 
 .wallet-chip {
     width: 40px; height: 30px;
@@ -491,7 +491,7 @@ a:hover { color: var(--primary-light); }
 }
 .balance-amount {
     font-size: 42px; font-weight: 900; letter-spacing: -2px;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
     background: linear-gradient(135deg, #fff 0%, var(--primary-light) 60%, var(--primary) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -507,7 +507,7 @@ a:hover { color: var(--primary-light); }
 }
 .stat-item { display: flex; align-items: center; gap: 10px; flex: 1; }
 .stat-icon { font-size: 20px; }
-.stat-value { font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; }
+.stat-value { font-size: 16px; font-weight: 800; font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif; }
 .stat-label { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.5px; }
 .stat-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.08); margin: 0 6px; }
 
@@ -600,7 +600,7 @@ a:hover { color: var(--primary-light); }
 .tx-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; }
 .tx-detail { font-size: 12px; color: var(--text-muted); margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tx-date { font-size: 11px; color: var(--text-dim); }
-.tx-amount { font-size: 16px; font-weight: 800; color: var(--primary); white-space: nowrap; margin-left: 12px; font-family: 'Space Grotesk', sans-serif; }
+.tx-amount { font-size: 16px; font-weight: 800; color: var(--primary); white-space: nowrap; margin-left: 12px; font-family: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif; }
 
 /* Empty state */
 .empty-state {
