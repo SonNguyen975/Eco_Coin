@@ -495,7 +495,7 @@ def machine_login():
         return redirect(url_for('machine'))
 
     return render_template('machine.html',
-        error='Sai tài khoản hoặc mật khẩu!',
+        error='Nhập cho đúng đi mấy má ơi!',
         item_prices=ITEM_PRICES,
         machine_user=None,
         open_form='login')
