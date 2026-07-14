@@ -521,69 +521,81 @@ def machine_submit():
             machine_user=machine_user,
             open_form=None)
 
-    token = str(uuid.uuid4())
-    db    = get_db()
+    try:
+        token = str(uuid.uuid4())
+        db    = get_db()
 
-    if machine_user:
-        # ── CHẾ ĐỘ ĐÃ ĐĂNG NHẬP: tiền vào thẳng tài khoản ──
-        total_items = sum(items.values())
-        db.execute(
-            "INSERT INTO transactions (token, user_id, amount, items_data, status) "
-            "VALUES (?, ?, ?, ?, 'direct')",
-            (token, machine_user['id'], total_amount, json.dumps(items))
-        )
-        db.execute(
-            'UPDATE users SET balance = balance + ?, total_items = total_items + ? WHERE id = ?',
-            (total_amount, total_items, machine_user['id'])
-        )
-        db.commit()
-        # Lấy lại user sau khi cập nhật balance
-        updated_user = db.execute('SELECT * FROM users WHERE id = ?', (machine_user['id'],)).fetchone()
-        db.close()
+        if machine_user:
+            # ── CHẾ ĐỘ ĐÃ ĐĂNG NHẬP: tiền vào thẳng tài khoản ──
+            total_items = sum(items.values())
+            db.execute(
+                "INSERT INTO transactions (token, user_id, amount, items_data, status) "
+                "VALUES (?, ?, ?, ?, 'direct')",
+                (token, machine_user['id'], total_amount, json.dumps(items))
+            )
+            db.execute(
+                'UPDATE users SET balance = balance + ?, total_items = total_items + ? WHERE id = ?',
+                (total_amount, total_items, machine_user['id'])
+            )
+            db.commit()
+            # Lấy lại user sau khi cập nhật balance
+            updated_user = db.execute('SELECT * FROM users WHERE id = ?', (machine_user['id'],)).fetchone()
+            db.close()
 
-        return render_template('machine.html',
-            item_prices=ITEM_PRICES,
-            machine_user=updated_user,
-            open_form=None,
-            result={
-                'mode':     'direct',
-                'amount':   total_amount,
-                'items':    items,
-                'new_balance': updated_user['balance'],
-            })
+            return render_template('machine.html',
+                item_prices=ITEM_PRICES,
+                machine_user=updated_user,
+                open_form=None,
+                result={
+                    'mode':     'direct',
+                    'amount':   total_amount,
+                    'items':    items,
+                    'new_balance': updated_user['balance'],
+                })
 
-    else:
-        # ── CHẾ ĐỘ KHÁCH: tạo QR để quét bằng app ──
-        db.execute(
-            "INSERT INTO transactions (token, amount, items_data, status) "
-            "VALUES (?, ?, ?, 'pending')",
-            (token, total_amount, json.dumps(items))
-        )
-        db.commit()
-        db.close()
-
-        # Luôn dùng Public URL (Railway) hoặc LAN IP
-        base_url = get_public_base_url()
-        if base_url:
-            claim_url = base_url + url_for('claim_qr', token=token)
         else:
-            port = request.host.split(':')[-1] if ':' in request.host else '5000'
-            claim_url = f"http://{LAN_IP}:{port}" + url_for('claim_qr', token=token)
-            
-        qr_b64 = generate_qr_base64(claim_url)
+            # ── CHẾ ĐỘ KHÁCH: tạo QR để quét bằng app ──
+            db.execute(
+                "INSERT INTO transactions (token, amount, items_data, status) "
+                "VALUES (?, ?, ?, 'pending')",
+                (token, total_amount, json.dumps(items))
+            )
+            db.commit()
+            db.close()
 
-        return render_template('machine.html',
-            item_prices=ITEM_PRICES,
-            machine_user=None,
-            open_form=None,
-            result={
-                'mode':      'qr',
-                'amount':    total_amount,
-                'items':     items,
-                'qr_image':  qr_b64,
-                'claim_url': claim_url,
-                'token':     token,
-            })
+            # Luôn dùng Public URL (Railway) hoặc LAN IP
+            base_url = get_public_base_url()
+            if base_url:
+                claim_url = base_url + url_for('claim_qr', token=token)
+            else:
+                port = request.host.split(':')[-1] if ':' in request.host else '5000'
+                claim_url = f"http://{LAN_IP}:{port}" + url_for('claim_qr', token=token)
+                
+            qr_b64 = generate_qr_base64(claim_url)
+
+            return render_template('machine.html',
+                item_prices=ITEM_PRICES,
+                machine_user=None,
+                open_form=None,
+                result={
+                    'mode':      'qr',
+                    'amount':    total_amount,
+                    'items':     items,
+                    'qr_image':  qr_b64,
+                    'claim_url': claim_url,
+                    'token':     token,
+                })
+
+    except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"[ERROR] machine_submit: {error_detail}")
+        # Hiển thị lỗi thật để debug (xóa sau khi ổn định)
+        return f"""
+        <h2 style='color:red'>Lỗi Debug (tạm thời)</h2>
+        <pre style='background:#111;color:#0f0;padding:20px;font-size:12px'>{error_detail}</pre>
+        <a href='/machine'>← Quay lại</a>
+        """, 500
 
 # ==============================================================
 # KHOI DONG SERVER
