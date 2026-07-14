@@ -286,7 +286,7 @@ def claim_qr(token):
     now         = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     db.execute(
-        'UPDATE transactions SET status = "claimed", user_id = ?, claimed_at = ? WHERE token = ?',
+        "UPDATE transactions SET status = 'claimed', user_id = ?, claimed_at = ? WHERE token = ?",
         (session['user_id'], now, token)
     )
     db.execute(
@@ -495,8 +495,8 @@ def machine_submit():
         # ── CHẾ ĐỘ ĐÃ ĐĂNG NHẬP: tiền vào thẳng tài khoản ──
         total_items = sum(items.values())
         db.execute(
-            'INSERT INTO transactions (token, user_id, amount, items_data, status) '
-            'VALUES (?, ?, ?, ?, "direct")',
+            "INSERT INTO transactions (token, user_id, amount, items_data, status) "
+            "VALUES (?, ?, ?, ?, 'direct')",
             (token, machine_user['id'], total_amount, json.dumps(items))
         )
         db.execute(
@@ -522,8 +522,8 @@ def machine_submit():
     else:
         # ── CHẾ ĐỘ KHÁCH: tạo QR để quét bằng app ──
         db.execute(
-            'INSERT INTO transactions (token, amount, items_data, status) '
-            'VALUES (?, ?, ?, "pending")',
+            "INSERT INTO transactions (token, amount, items_data, status) "
+            "VALUES (?, ?, ?, 'pending')",
             (token, total_amount, json.dumps(items))
         )
         db.commit()

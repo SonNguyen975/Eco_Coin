@@ -9,28 +9,42 @@ if DATABASE_URL:
     import psycopg2
     import psycopg2.extras
 
-    # Railway đôi khi cấp URL dạng postgres://, psycopg2 cần postgresql://
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+    class _PgConnection:
+        """
+        Wrapper giúp psycopg2 hoạt động giống sqlite3:
+        - conn.execute(sql, params)
+        - conn.commit() / conn.close()
+        - Rows truy cập được bằng tên cột (như dict)
+        """
+        def __init__(self, conn):
+            self._conn = conn
+
+        def execute(self, sql, params=()):
+            # Chuyển placeholder ? → %s (SQLite → PostgreSQL)
+            sql = sql.replace('?', '%s')
+            cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(sql, params)
+            return cur
+
+        def commit(self):
+            self._conn.commit()
+
+        def close(self):
+            self._conn.close()
 
     def get_db():
         """Trả về connection đến PostgreSQL (production)."""
         conn = psycopg2.connect(DATABASE_URL)
-        return conn
-
-    def _execute(conn, sql, params=()):
-        """Helper: tự động chuyển ? → %s cho PostgreSQL."""
-        sql = sql.replace('?', '%s')
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(sql, params)
-        return cur
+        return _PgConnection(conn)
 
     def init_db():
         """Khởi tạo bảng PostgreSQL."""
-        conn = get_db()
-        c = conn.cursor()
+        db = get_db()
 
-        c.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id            SERIAL PRIMARY KEY,
                 username      TEXT UNIQUE NOT NULL,
@@ -43,7 +57,7 @@ if DATABASE_URL:
             )
         ''')
 
-        c.execute('''
+        db.execute('''
             CREATE TABLE IF NOT EXISTS transactions (
                 id         SERIAL PRIMARY KEY,
                 token      TEXT UNIQUE NOT NULL,
@@ -57,8 +71,8 @@ if DATABASE_URL:
             )
         ''')
 
-        conn.commit()
-        conn.close()
+        db.commit()
+        db.close()
         print("[DB] PostgreSQL database khoi tao thanh cong.")
 
 else:
@@ -70,12 +84,6 @@ else:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         return conn
-
-    def _execute(conn, sql, params=()):
-        """Helper (SQLite không cần đổi ?)."""
-        cur = conn.cursor()
-        cur.execute(sql, params)
-        return cur
 
     def init_db():
         """Khởi tạo SQLite database."""
@@ -95,7 +103,6 @@ else:
             )
         ''')
 
-        # Thêm cột face_descriptor nếu chưa có (cho DB cũ)
         try:
             c.execute('ALTER TABLE users ADD COLUMN face_descriptor TEXT')
             conn.commit()
