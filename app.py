@@ -175,6 +175,63 @@ def debug_info():
     """
 
 # ==============================================================
+# ROUTES – QUẢN TRỊ VIÊN (ADMIN DASHBOARD)
+# ==============================================================
+
+def is_admin():
+    return session.get('is_admin') == True
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if is_admin():
+        return redirect(url_for('admin_dashboard'))
+    
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password')
+        admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
+        if password == admin_pass:
+            session['is_admin'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error = 'Sai mật khẩu quản trị!'
+            
+    return render_template('admin.html', view='login', error=error)
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect(url_for('admin_login'))
+
+@app.route('/admin')
+def admin_dashboard():
+    if not is_admin():
+        return redirect(url_for('admin_login'))
+        
+    db = get_db()
+    
+    # Lấy thống kê tổng quan
+    total_users_query = db.execute("SELECT COUNT(id) as count FROM users").fetchone()
+    total_users = total_users_query['count'] if total_users_query else 0
+    
+    total_items_query = db.execute("SELECT SUM(total_items) as count FROM users").fetchone()
+    total_items = total_items_query['count'] if total_items_query and total_items_query['count'] else 0
+    
+    total_balance_query = db.execute("SELECT SUM(balance) as sum FROM users").fetchone()
+    total_balance = total_balance_query['sum'] if total_balance_query and total_balance_query['sum'] else 0
+    
+    # Lấy danh sách người dùng
+    users = db.execute("SELECT * FROM users ORDER BY created_at DESC").fetchall()
+    db.close()
+    
+    return render_template('admin.html', 
+                           view='dashboard',
+                           total_users=total_users,
+                           total_items=total_items,
+                           total_balance=total_balance,
+                           users=users)
+
+# ==============================================================
 # ROUTES – ỨNG DỤNG NGƯỜI DÙNG (MOBILE APP)
 # ==============================================================
 
