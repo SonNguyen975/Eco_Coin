@@ -7,15 +7,16 @@
     <!-- HEADER WALLET CARD -->
     <div class="wallet-card">
         <div class="wallet-bg-glow"></div>
+        <div class="wallet-card-sheen"></div>
         <div class="wallet-header">
             <div>
                 <p class="wallet-greeting">Xin chào 👋</p>
                 <h2 class="wallet-username">{{ user['username'] }}</h2>
             </div>
-            <div class="wallet-icon">💳</div>
+            <div class="wallet-chip">💳</div>
         </div>
         <div class="wallet-balance">
-            <p class="balance-label">Số dư ví</p>
+            <p class="balance-label">Số dư ví ECO</p>
             <div class="balance-amount" id="balanceDisplay" data-value="{{ user['balance'] }}">
                 {{ user['balance']|currency }}
             </div>
@@ -33,7 +34,7 @@
                 <span class="stat-icon">🌿</span>
                 <div>
                     <p class="stat-value">{{ (user['total_items'] * 0.03)|round(2) }}kg</p>
-                    <p class="stat-label">CO₂ đã tiết kiệm</p>
+                    <p class="stat-label">CO₂ tiết kiệm</p>
                 </div>
             </div>
             <div class="stat-divider"></div>
@@ -78,7 +79,7 @@
         {% for tx in transactions %}
         <div class="tx-card {{ 'tx-direct' if tx.status == 'direct' else ('tx-claimed' if tx.status == 'claimed' else 'tx-pending') }}">
             <div class="tx-left">
-                <div class="tx-icon">
+                <div class="tx-icon-wrap">
                     {% if tx.status == 'direct' %}🖥️
                     {% elif tx.status == 'claimed' %}✅
                     {% else %}⏳
