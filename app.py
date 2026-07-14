@@ -142,6 +142,34 @@ def fmt_date_filter(dt_str):
         return str(dt_str)
 
 # ==============================================================
+# ROUTE DEBUG – chỉ dùng để kiểm tra, xóa sau khi ổn định
+# ==============================================================
+
+@app.route('/debug')
+def debug_info():
+    """Kiểm tra cấu hình server - xóa route này sau khi deploy ổn."""
+    import os
+    db_url = os.environ.get('DATABASE_URL', 'KHÔNG CÓ - đang dùng SQLite')
+    # Ẩn password trong URL
+    if '@' in db_url:
+        parts = db_url.split('@')
+        db_url = '***:***@' + parts[-1]
+    try:
+        db = get_db()
+        db.execute('SELECT 1')
+        db.close()
+        db_status = '✅ Kết nối OK'
+    except Exception as e:
+        db_status = f'❌ Lỗi: {str(e)}'
+    return f"""
+    <h2>Debug Info</h2>
+    <p><b>DATABASE_URL:</b> {db_url}</p>
+    <p><b>DB Status:</b> {db_status}</p>
+    <p><b>PORT:</b> {os.environ.get('PORT', '5000')}</p>
+    <p><b>RAILWAY_DOMAIN:</b> {os.environ.get('RAILWAY_PUBLIC_DOMAIN', 'không có')}</p>
+    """
+
+# ==============================================================
 # ROUTES – ỨNG DỤNG NGƯỜI DÙNG (MOBILE APP)
 # ==============================================================
 
