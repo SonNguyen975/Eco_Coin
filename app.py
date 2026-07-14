@@ -189,7 +189,7 @@ def admin_login():
     error = None
     if request.method == 'POST':
         password = request.form.get('password')
-        admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
+        admin_pass = os.environ.get('ADMIN_PASSWORD', 'chamiucuason')
         if password == admin_pass:
             session['is_admin'] = True
             return redirect(url_for('admin_dashboard'))
