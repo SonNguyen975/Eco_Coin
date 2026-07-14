@@ -1,0 +1,28 @@
+# Môi trường ảo Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Database local (không đẩy lên - Railway dùng PostgreSQL)
+eco_coin.db
+
+# File tunnel tạm thời
+public_url.txt
+pinggy.log
+
+# QR code tạm thời
+qr_app_home.png
+qr_app_machine.png
+reward_qr_*.png
+
+# File binary cloudflare
+cloudflared.exe
+
+# File môi trường bí mật
+.env
+
+# IDE
+.vscode/
+.idea/

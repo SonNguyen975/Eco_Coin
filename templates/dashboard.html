@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Ví của tôi – Eco Coin{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+    <!-- HEADER WALLET CARD -->
+    <div class="wallet-card">
+        <div class="wallet-bg-glow"></div>
+        <div class="wallet-header">
+            <div>
+                <p class="wallet-greeting">Xin chào 👋</p>
+                <h2 class="wallet-username">{{ user['username'] }}</h2>
+            </div>
+            <div class="wallet-icon">💳</div>
+        </div>
+        <div class="wallet-balance">
+            <p class="balance-label">Số dư ví</p>
+            <div class="balance-amount" id="balanceDisplay" data-value="{{ user['balance'] }}">
+                {{ user['balance']|currency }}
+            </div>
+        </div>
+        <div class="wallet-stats">
+            <div class="stat-item">
+                <span class="stat-icon">♻️</span>
+                <div>
+                    <p class="stat-value">{{ user['total_items'] }}</p>
+                    <p class="stat-label">Chai/Lon đã nộp</p>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">🌿</span>
+                <div>
+                    <p class="stat-value">{{ (user['total_items'] * 0.03)|round(2) }}kg</p>
+                    <p class="stat-label">CO₂ đã tiết kiệm</p>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-icon">📋</span>
+                <div>
+                    <p class="stat-value">{{ transactions|length }}</p>
+                    <p class="stat-label">Giao dịch</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="section-title">Thao tác nhanh</div>
+    <div class="quick-actions">
+        <a href="{{ url_for('machine') }}" class="action-card action-machine">
+            <div class="action-icon">🖥️</div>
+            <p>Mở máy Eco Coin</p>
+        </a>
+        <div class="action-card action-scan" onclick="showScanTip()">
+            <div class="action-icon">📷</div>
+            <p>Quét QR nhận tiền</p>
+        </div>
+    </div>
+
+    <!-- TRANSACTION HISTORY -->
+    <div class="section-title">Lịch sử giao dịch</div>
+
+    {% if not transactions %}
+    <div class="empty-state">
+        <div class="empty-icon">🍃</div>
+        <p>Bạn chưa có giao dịch nào.</p>
+        <p class="empty-sub">Hãy mang chai và lon đến máy Eco Coin gần nhất!</p>
+    </div>
+    {% else %}
+    <div class="tx-list">
+        {% for tx in transactions %}
+        <div class="tx-card {{ 'tx-direct' if tx.status == 'direct' else ('tx-claimed' if tx.status == 'claimed' else 'tx-pending') }}">
+            <div class="tx-left">
+                <div class="tx-icon">
+                    {% if tx.status == 'direct' %}🖥️
+                    {% elif tx.status == 'claimed' %}✅
+                    {% else %}⏳
+                    {% endif %}
+                </div>
+                <div class="tx-info">
+                    <p class="tx-title">
+                        {% if tx.status == 'direct' %}Nộp trực tiếp qua máy
+                        {% elif tx.status == 'claimed' %}Nhận qua mã QR
+                        {% else %}Đang chờ quét QR...
+                        {% endif %}
+                    </p>
+                    <p class="tx-detail">
+                        {{ tx.total_items }} vật phẩm –
+                        {% for key, qty in tx['items'].items() %}
+                            {{ qty }} {{ item_prices[key].name }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                    <p class="tx-date">{{ tx.created_at|fmt_date }}</p>
+                </div>
+            </div>
+            <div class="tx-amount">+{{ tx.amount|currency }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- SCAN TIP MODAL -->
+<div id="scanModal" class="modal-overlay" onclick="closeScanTip()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-icon">📷</div>
+        <h3>Quét mã QR</h3>
+        <p>Sau khi bỏ chai/lon vào máy, nhấn <b>Xuất QR</b> trên màn hình máy, rồi dùng Camera điện thoại quét mã QR để nhận tiền vào ví này.</p>
+        <button class="btn btn-primary" onclick="closeScanTip()">Đã hiểu</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showScanTip() {
+    document.getElementById('scanModal').classList.add('visible');
+}
+function closeScanTip() {
+    document.getElementById('scanModal').classList.remove('visible');
+}
+</script>
+{% endblock %}

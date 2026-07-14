@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Coin – Máy thu gom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* ── KIOSK-SPECIFIC OVERRIDES ── */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .machine-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+        /* LEFT SIDEBAR */
+        .machine-sidebar {
+            background: linear-gradient(180deg, #041a0c 0%, #061409 100%);
+            border-right: 1px solid var(--card-border);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+        .machine-logo {
+            text-align: center;
+        }
+        .machine-logo .logo-emoji {
+            font-size: 56px;
+            display: block;
+            animation: spin-slow 8s linear infinite;
+        }
+        @keyframes spin-slow {
+            0%   { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .machine-logo h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 8px 0 2px;
+            letter-spacing: 1px;
+        }
+        .machine-logo p {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .machine-clock {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            width: 100%;
+        }
+        .machine-clock .clock-time {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-light);
+            font-variant-numeric: tabular-nums;
+        }
+        .machine-clock .clock-date {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .price-list {
+            width: 100%;
+        }
+        .price-list h4 {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            font-size: 13px;
+        }
+        .price-row .pi { font-size: 18px; }
+        .price-row .pn { color: var(--text); flex: 1; margin-left: 8px; line-height: 1.3; }
+        .price-row .pn small { display: block; color: var(--text-muted); font-size: 11px; }
+        .price-row .pp { color: var(--primary); font-weight: 700; white-space: nowrap; }
+        .machine-sidebar-footer {
+            margin-top: auto;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* RIGHT MAIN AREA */
+        .machine-main {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* STEP 1: LOGIN/GUEST */
+        .step-login {
+            max-width: 520px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .step-login h2 {
+            font-size: 30px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .step-login .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+        .login-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .option-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .option-card:hover {
+            border-color: var(--primary);
+            background: rgba(0,200,83,0.08);
+            transform: translateY(-2px);
+        }
+        .option-card .oc-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+        .option-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+        .option-card p { font-size: 13px; color: var(--text-muted); }
+        .machine-login-form {
+            display: none;
+            margin-top: 24px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+        .machine-login-form.visible { display: block; }
+
+        /* Machine auth tabs */
+        .m-tabs {
+            display: flex; gap: 0;
+            background: var(--bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px; padding: 4px;
+            margin-bottom: 20px;
+        }
+        .m-tab-btn {
+            flex: 1; padding: 10px 16px;
+            background: transparent; border: none;
+            color: var(--text-muted); font-size: 15px; font-weight: 600;
+            cursor: pointer; border-radius: 7px;
+            transition: all 0.2s ease; font-family: inherit;
+        }
+        .m-tab-btn.active {
+            background: linear-gradient(135deg, var(--primary-dark), #014a1e);
+            color: var(--text);
+            border: 1px solid rgba(0,200,83,0.3);
+        }
+
+        /* STEP 2: ITEM SELECTION */
+        .step-select { max-width: 680px; margin: 0 auto; width: 100%; }
+        .step-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+        .step-header h2 { font-size: 26px; font-weight: 800; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: 40px; padding: 8px 16px;
+        }
+        .user-badge .ub-avatar { width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px; }
+        .user-badge .ub-name { font-weight: 600; font-size: 14px; }
+        .user-badge .ub-logout { font-size: 12px; color: var(--text-muted);
+            text-decoration: none; margin-left: 4px; }
+        .user-badge .ub-logout:hover { color: var(--danger); }
+
+        .item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+        .item-selector {
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .item-selector.has-items { border-color: var(--primary); background: rgba(0,200,83,0.07); }
+        .item-selector .is-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .item-selector .is-emoji { font-size: 36px; }
+        .item-selector .is-info h4 { font-size: 15px; font-weight: 700; }
+        .item-selector .is-info p { font-size: 12px; color: var(--text-muted); }
+        .item-selector .is-price { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .qty-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        .qty-btn {
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 2px solid var(--card-border);
+            background: var(--bg2);
+            color: var(--text);
+            font-size: 22px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1;
+        }
+        .qty-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(0,200,83,0.1); }
+        .qty-btn:active { transform: scale(0.92); }
+        .qty-display {
+            font-size: 32px; font-weight: 800; min-width: 50px;
+            text-align: center; color: var(--text);
+        }
+
+        .total-bar {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .total-bar .tb-label { font-size: 14px; color: var(--text-muted); }
+        .total-bar .tb-count { font-size: 14px; color: var(--text-muted); }
+        .total-bar .tb-amount { font-size: 32px; font-weight: 900; color: var(--primary); }
+
+        /* STEP 3: RESULT */
+        .step-result {
+            max-width: 580px; margin: 0 auto; width: 100%;
+            text-align: center;
+        }
+        .result-direct .result-anim { font-size: 80px; animation: bounceIn 0.6s ease; }
+        .result-qr .qr-wrapper {
+            background: white; border-radius: 20px; padding: 24px;
+            display: inline-block; margin: 20px 0;
+        }
+        .result-qr .qr-wrapper img { width: 220px; height: 220px; display: block; }
+        .result-title { font-size: 28px; font-weight: 800; margin: 16px 0 8px; }
+        .result-sub { color: var(--text-muted); font-size: 15px; margin-bottom: 24px; }
+        .result-amount-box {
+            background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.3);
+            border-radius: 16px; padding: 20px;
+            font-size: 42px; font-weight: 900; color: var(--primary);
+            margin-bottom: 24px;
+        }
+        .result-items-mini {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            justify-content: center; margin-bottom: 24px;
+        }
+        .rim-tag {
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: 30px; padding: 6px 14px; font-size: 13px;
+        }
+        .qr-instruction {
+            background: rgba(255,183,77,0.1); border: 1px solid rgba(255,183,77,0.3);
+            border-radius: 12px; padding: 16px; margin-bottom: 24px;
+            font-size: 14px; color: #ffb74d; text-align: left; line-height: 1.7;
+        }
+        .qr-instruction b { color: #ffd740; }
+        .btn-back-machine {
+            display: inline-block; padding: 14px 36px;
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: 12px; color: var(--text); font-size: 15px;
+            font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-back-machine:hover { border-color: var(--primary); color: var(--primary); }
+
+        @keyframes bounceIn {
+            0%   { transform: scale(0.3); opacity: 0; }
+            50%  { transform: scale(1.05); }
+            70%  { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Error alert */
+        .machine-error {
+            background: rgba(255,82,82,0.1);
+            border: 1px solid rgba(255,82,82,0.3);
+            border-radius: 12px; padding: 14px 18px;
+            color: #ff5252; margin-bottom: 20px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ANIMATED ECO BACKGROUND -->
+<div class="eco-bg">
+    <div class="eco-blob blob-1"></div>
+    <div class="eco-blob blob-2"></div>
+    <div class="eco-blob blob-3"></div>
+    <div class="eco-blob blob-4"></div>
+    <div class="eco-grid"></div>
+</div>
+
+<div class="machine-layout">
+
+    <!-- ════════════════ LEFT SIDEBAR ════════════════ -->
+    <aside class="machine-sidebar">
+        <div class="machine-logo">
+            <span class="logo-emoji">♻️</span>
+            <h1>ECO COIN</h1>
+            <p>Máy thu gom tái chế</p>
+        </div>
+
+        <div class="machine-clock">
+            <div class="clock-time" id="machineTime">--:--:--</div>
+            <div class="clock-date" id="machineDate">--/--/----</div>
+        </div>
+
+        <div class="price-list">
+            <h4>Bảng giá hôm nay</h4>
+            {% for key, info in item_prices.items() %}
+            <div class="price-row">
+                <span class="pi">{{ info.icon }}</span>
+                <span class="pn">{{ info.name }}<small>{{ info.detail }}</small></span>
+                <span class="pp">{{ info.price }}đ</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="machine-sidebar-footer">
+            <p>🌿 Cùng bảo vệ môi trường</p>
+            <p>Mỗi chai bạn nộp = một hành động xanh</p>
+        </div>
+    </aside>
+
+    <!-- ════════════════ MAIN CONTENT ════════════════ -->
+    <main class="machine-main">
+
+        {% if error %}
+        <div class="machine-error" style="max-width:600px;margin:0 auto 0 auto;">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <!-- ──────── STEP 3: RESULT ──────── -->
+        {% if result %}
+
+            {% if result.mode == 'direct' %}
+            <!-- DIRECT MODE RESULT -->
+            <div class="step-result result-direct">
+                <div class="result-anim">✅</div>
+                <h2 class="result-title">Cộng tiền thành công!</h2>
+                <p class="result-sub">Tiền đã được cộng trực tiếp vào tài khoản <b>{{ machine_user['username'] }}</b></p>
+                <div class="result-amount-box">+{{ result.amount|currency }}</div>
+                <div class="result-items-mini">
+                    {% for key, qty in result['items'].items() %}
+                    <span class="rim-tag">{{ item_prices[key].icon }} {{ item_prices[key].name }} ×{{ qty }}</span>
+                    {% endfor %}
+                </div>
+                <p style="color:var(--text-muted);font-size:14px;margin-bottom:24px;">
+                    Số dư mới: <b style="color:var(--primary);font-size:20px;">{{ result.new_balance|currency }}</b>
+                </p>
+                <a href="{{ url_for('machine') }}" class="btn btn-primary" style="margin-right:12px;">
+                    🔄 Giao dịch mới
+                </a>
+                <a href="{{ url_for('machine_logout') }}" class="btn-back-machine">Đăng xuất</a>
+            </div>
+
+            {% elif result.mode == 'qr' %}
+            <!-- QR MODE RESULT -->
+            <div class="step-result result-qr">
+                <h2 class="result-title">📱 Quét mã QR để nhận tiền</h2>
+                <div class="qr-instruction">
+                    <b>Hướng dẫn 3 bước:</b><br>
+                    1️⃣ Mở <b>Eco Coin App</b> trên điện thoại và đăng nhập<br>
+                    2️⃣ Dùng Camera quét mã QR bên dưới<br>
+                    3️⃣ Tiền được cộng ngay vào ví của bạn! 🎉
+                </div>
+                <div class="result-amount-box">{{ result.amount|currency }}</div>
+                <div class="qr-wrapper">
+                    <img src="data:image/png;base64,{{ result.qr_image }}" alt="QR Code nhận thưởng">
+                </div>
+                <div class="result-items-mini">
+                    {% for key, qty in result['items'].items() %}
+                    <span class="rim-tag">{{ item_prices[key].icon }} {{ item_prices[key].name }} ×{{ qty }}</span>
+                    {% endfor %}
+                </div>
+                <p style="color:var(--text-muted);font-size:12px;margin-bottom:24px;">
+                    ⏰ Mã QR có hiệu lực trong 24 giờ • Token: {{ result.token[:8] }}...
+                </p>
+                <a href="{{ url_for('machine') }}" class="btn btn-primary">
+                    🔄 Giao dịch mới
+                </a>
+            </div>
+            {% endif %}
+
+        <!-- ──────── STEP 2: ITEM SELECTION ──────── -->
+        {% elif machine_user %}
+        <div class="step-select">
+            <div class="step-header">
+                <div>
+                    <h2>Bỏ chai/lon vào máy</h2>
+                    <p style="color:var(--text-muted);font-size:14px;">Chọn số lượng từng loại bên dưới</p>
+                </div>
+                <div class="user-badge">
+                    <div class="ub-avatar">{{ machine_user['username'][0].upper() }}</div>
+                    <div>
+                        <p class="ub-name">{{ machine_user['username'] }}</p>
+                        <p style="font-size:12px;color:var(--primary);">{{ machine_user['balance']|currency }}</p>
+                    </div>
+                    <a href="{{ url_for('machine_logout') }}" class="ub-logout" title="Đăng xuất">✕</a>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('machine_submit') }}" id="depositForm">
+                <div class="item-grid">
+                    {% for key, info in item_prices.items() %}
+                    <div class="item-selector" id="card_{{ key }}">
+                        <div class="is-top">
+                            <span class="is-emoji">{{ info.icon }}</span>
+                            <div class="is-info">
+                                <h4>{{ info.name }}</h4>
+                                <p>{{ info.detail }}</p>
+                            </div>
+                        </div>
+                        <p class="is-price">{{ info.price }}đ/cái</p>
+                        <div class="qty-control">
+                            <button type="button" class="qty-btn"
+                                    onclick="changeQty('{{ key }}', -1)">−</button>
+                            <span class="qty-display" id="qty_{{ key }}">0</span>
+                            <button type="button" class="qty-btn"
+                                    onclick="changeQty('{{ key }}', 1)">+</button>
+                        </div>
+                        <input type="hidden" name="{{ key }}" id="inp_{{ key }}" value="0">
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- TOTAL BAR -->
+                <div class="total-bar">
+                    <div>
+                        <p class="tb-label">Tổng vật phẩm</p>
+                        <p class="tb-count" id="totalCount">0 cái</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <p class="tb-label">Tiền nhận được</p>
+                        <p class="tb-amount" id="totalAmount">0đ</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg"
+                        id="submitBtn" disabled>
+                    ✅ Xác nhận – Cộng tiền vào tài khoản
+                </button>
+            </form>
+        </div>
+
+        <!-- ──────── STEP 1A: WELCOME – chọn cách nhận tiền ──────── -->
+        {% else %}
+        {% if request.args.get('guest') %}
+
+        <!-- ── CHẾ ĐỘ KHÁCH: chỉ hiện form chọn chai/lon ── -->
+        <div class="step-select">
+            <div class="step-header">
+                <div>
+                    <h2>📦 Chọn chai/lon để bỏ vào</h2>
+                    <p style="color:var(--text-muted);font-size:14px;">
+                        Sau khi xác nhận, máy sẽ xuất mã QR để bạn quét nhận tiền
+                    </p>
+                </div>
+                <a href="{{ url_for('machine') }}"
+                   style="display:flex;align-items:center;gap:8px;padding:10px 18px;
+                          background:var(--card);border:1px solid var(--card-border);
+                          border-radius:10px;color:var(--text-muted);font-size:14px;
+                          text-decoration:none;transition:all .3s ease;white-space:nowrap;"
+                   onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+                   onmouseout="this.style.borderColor='var(--card-border)';this.style.color='var(--text-muted)'">
+                    ← Quay lại
+                </a>
+            </div>
+
+            <form method="POST" action="{{ url_for('machine_submit') }}" id="guestForm">
+                <div class="item-grid">
+                    {% for key, info in item_prices.items() %}
+                    <div class="item-selector" id="gcard_{{ key }}">
+                        <div class="is-top">
+                            <span class="is-emoji">{{ info.icon }}</span>
+                            <div class="is-info">
+                                <h4>{{ info.name }}</h4>
+                                <p>{{ info.detail }}</p>
+                            </div>
+                        </div>
+                        <p class="is-price">{{ info.price }}đ/cái</p>
+                        <div class="qty-control">
+                            <button type="button" class="qty-btn"
+                                    onclick="gChangeQty('{{ key }}', -1)">−</button>
+                            <span class="qty-display" id="gqty_{{ key }}">0</span>
+                            <button type="button" class="qty-btn"
+                                    onclick="gChangeQty('{{ key }}', 1)">+</button>
+                        </div>
+                        <input type="hidden" name="{{ key }}" id="ginp_{{ key }}" value="0">
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="total-bar">
+                    <div>
+                        <p class="tb-label">Tổng vật phẩm</p>
+                        <p class="tb-count" id="gTotalCount">0 cái</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <p class="tb-label">Tiền nhận được</p>
+                        <p class="tb-amount" id="gTotalAmount">0đ</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg"
+                        id="gSubmitBtn" disabled>
+                    📱 Xuất mã QR nhận tiền
+                </button>
+            </form>
+        </div>
+
+        {% else %}
+
+        <!-- ── MÀN HÌNH CHÀO: chọn đăng nhập hoặc khách ── -->
+        <div class="step-login">
+            <h2>Chào mừng đến với <span class="text-green">Eco Coin</span> 👋</h2>
+            <p class="subtitle">Chọn cách bạn muốn nhận tiền thưởng hôm nay</p>
+
+            <div class="login-options">
+                <div class="option-card" onclick="showLoginForm()">
+                    <span class="oc-icon">🔑</span>
+                    <h3>Đăng nhập</h3>
+                    <p>Tiền được cộng trực tiếp vào tài khoản của bạn, không cần quét QR</p>
+                </div>
+                <div class="option-card" onclick="window.location.href='{{ url_for('machine') }}?guest=1'">
+                    <span class="oc-icon">📱</span>
+                    <h3>Không đăng nhập</h3>
+                    <p>Nhận mã QR sau khi bỏ chai – quét bằng app để nhận tiền về ví</p>
+                </div>
+            </div>
+
+            <!-- AUTH FORM (hidden by default) -->
+            <div class="machine-login-form" id="machineLoginForm">
+                <!-- Tabs -->
+                <div class="m-tabs">
+                    <button class="m-tab-btn active" id="mTabLogin" onclick="mSwitchTab('login')">
+                        🔑 Đăng nhập
+                    </button>
+                    <button class="m-tab-btn" id="mTabRegister" onclick="mSwitchTab('register')">
+                        🌿 Đăng ký
+                    </button>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <div id="mFormLogin">
+                    <form method="POST" action="{{ url_for('machine_login') }}" class="form">
+                        <div class="form-group">
+                            <label>Tài khoản / Số điện thoại</label>
+                            <input type="text" name="username" placeholder="Nhập tài khoản hoặc SĐT"
+                                   required style="font-size:17px;padding:13px 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu</label>
+                            <input type="password" name="password" placeholder="••••••••"
+                                   required style="font-size:17px;padding:13px 16px;">
+                        </div>
+                        <div style="display:flex;gap:12px;">
+                            <button type="submit" class="btn btn-primary" style="flex:1;font-size:16px;padding:14px;">
+                                Đăng nhập
+                            </button>
+                            <button type="button" class="btn-back-machine" onclick="hideLoginForm()">
+                                Hủy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- REGISTER FORM -->
+                <div id="mFormRegister" style="display:none;">
+                    <form method="POST" action="{{ url_for('machine_register') }}" class="form">
+                        <div class="form-group">
+                            <label>Tên đăng nhập <span style="color:var(--danger)">*</span></label>
+                            <input type="text" name="username" placeholder="Nhập tên đăng nhập"
+                                   required style="font-size:17px;padding:13px 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Số điện thoại <span style="color:var(--text-muted);font-weight:400;">(tùy chọn)</span></label>
+                            <input type="tel" name="phone" placeholder="0912 345 678"
+                                   style="font-size:17px;padding:13px 16px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu <span style="color:var(--danger)">*</span></label>
+                            <input type="password" name="password" placeholder="Tối thiểu 6 ký tự"
+                                   required style="font-size:17px;padding:13px 16px;">
+                        </div>
+                        <div style="display:flex;gap:12px;">
+                            <button type="submit" class="btn btn-primary" style="flex:1;font-size:16px;padding:14px;">
+                                Tạo tài khoản
+                            </button>
+                            <button type="button" class="btn-back-machine" onclick="hideLoginForm()">
+                                Hủy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script>
+// ── MACHINE CLOCK ──
+function updateClock() {
+    const now = new Date();
+    const timeEl = document.getElementById('machineTime');
+    const dateEl = document.getElementById('machineDate');
+    if (timeEl) {
+        timeEl.textContent = now.toLocaleTimeString('vi-VN');
+        dateEl.textContent = now.toLocaleDateString('vi-VN', {
+            weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'
+        });
+    }
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── PRICES for JS calculation ──
+const PRICES = {
+    {% for key, info in item_prices.items() %}
+    '{{ key }}': {{ info.price }},
+    {% endfor %}
+};
+
+// ── LOGGED-IN FORM ──
+function changeQty(key, delta) {
+    const inp = document.getElementById('inp_' + key);
+    const disp = document.getElementById('qty_' + key);
+    const card = document.getElementById('card_' + key);
+    let val = Math.max(0, parseInt(inp.value || 0) + delta);
+    inp.value = val;
+    disp.textContent = val;
+    card.classList.toggle('has-items', val > 0);
+    recalcTotal();
+}
+function recalcTotal() {
+    let count = 0, amount = 0;
+    for (const key in PRICES) {
+        const v = parseInt(document.getElementById('inp_' + key)?.value || 0);
+        count += v; amount += v * PRICES[key];
+    }
+    const countEl = document.getElementById('totalCount');
+    const amtEl   = document.getElementById('totalAmount');
+    const btn      = document.getElementById('submitBtn');
+    if (countEl) countEl.textContent = count + ' cái';
+    if (amtEl)   amtEl.textContent   = amount.toLocaleString('vi-VN') + 'đ';
+    if (btn)     btn.disabled        = count === 0;
+}
+
+// ── GUEST FORM ──
+function gChangeQty(key, delta) {
+    const inp = document.getElementById('ginp_' + key);
+    const disp = document.getElementById('gqty_' + key);
+    const card = document.getElementById('gcard_' + key);
+    if (!inp) return;
+    let val = Math.max(0, parseInt(inp.value || 0) + delta);
+    inp.value = val;
+    disp.textContent = val;
+    card.classList.toggle('has-items', val > 0);
+    gRecalcTotal();
+}
+function gRecalcTotal() {
+    let count = 0, amount = 0;
+    for (const key in PRICES) {
+        const v = parseInt(document.getElementById('ginp_' + key)?.value || 0);
+        count += v; amount += v * PRICES[key];
+    }
+    const countEl = document.getElementById('gTotalCount');
+    const amtEl   = document.getElementById('gTotalAmount');
+    const btn      = document.getElementById('gSubmitBtn');
+    if (countEl) countEl.textContent = count + ' cái';
+    if (amtEl)   amtEl.textContent   = amount.toLocaleString('vi-VN') + 'đ';
+    if (btn)     btn.disabled        = count === 0;
+}
+
+
+// ── TOGGLE AUTH FORM ──
+function showLoginForm(tab) {
+    document.getElementById('machineLoginForm').classList.add('visible');
+    if (tab) mSwitchTab(tab);
+    else mSwitchTab('login');
+    setTimeout(() => {
+        const firstInput = document.getElementById('machineLoginForm').querySelector('input:not([type=hidden])');
+        if (firstInput) firstInput.focus();
+    }, 100);
+}
+function hideLoginForm() {
+    document.getElementById('machineLoginForm').classList.remove('visible');
+}
+
+// ── SWITCH BETWEEN LOGIN / REGISTER TAB ──
+function mSwitchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('mFormLogin').style.display    = isLogin ? 'block' : 'none';
+    document.getElementById('mFormRegister').style.display = isLogin ? 'none'  : 'block';
+    document.getElementById('mTabLogin').classList.toggle('active', isLogin);
+    document.getElementById('mTabRegister').classList.toggle('active', !isLogin);
+}
+
+// ── AUTO-OPEN FORM IF SERVER SENT open_form (e.g. after register error) ──
+{% if open_form %}
+document.addEventListener('DOMContentLoaded', () => {
+    showLoginForm('{{ open_form }}');
+});
+{% endif %}
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập – Eco Coin{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <!-- Decoration blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="auth-card">
+        <!-- Logo -->
+        <div class="auth-logo">
+            <div class="logo-icon">♻️</div>
+            <h1 class="logo-text">Eco<span>Coin</span></h1>
+            <p class="logo-sub">Tái chế – Nhận thưởng – Bảo vệ môi trường</p>
+        </div>
+
+        <!-- Error message -->
+        {% if error %}
+        <div class="alert alert-danger">
+            <span>⚠️</span> {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- Tabs -->
+        <div class="tabs" id="authTabs">
+            <button class="tab-btn {% if tab != 'register' %}active{% endif %}"
+                    onclick="switchTab('login')">Đăng nhập</button>
+            <button class="tab-btn {% if tab == 'register' %}active{% endif %}"
+                    onclick="switchTab('register')">Đăng ký</button>
+            <div class="tab-indicator"></div>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div class="tab-content" id="tab-login"
+             style="display: {% if tab == 'register' %}none{% else %}block{% endif %};">
+            <form method="POST" action="{{ url_for('login') }}" class="form">
+                {% if next_url %}
+                <input type="hidden" name="next_url" value="{{ next_url }}">
+                {% endif %}
+                <div class="form-group">
+                    <label>Tài khoản / Số điện thoại</label>
+                    <input type="text" name="username" id="login-username"
+                           placeholder="Nhập tài khoản hoặc SĐT" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" name="password" id="login-password"
+                           placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                    🔑 Đăng nhập
+                </button>
+            </form>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div class="tab-content" id="tab-register"
+             style="display: {% if tab == 'register' %}block{% else %}none{% endif %};">
+            <form method="POST" action="{{ url_for('register') }}" class="form">
+                {% if next_url %}
+                <input type="hidden" name="next_url" value="{{ next_url }}">
+                {% endif %}
+                <div class="form-group">
+                    <label>Tên đăng nhập <span class="required">*</span></label>
+                    <input type="text" name="username" id="reg-username"
+                           placeholder="Nhập tên đăng nhập" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại <span class="optional">(tùy chọn)</span></label>
+                    <input type="tel" name="phone" id="reg-phone"
+                           placeholder="0912 345 678" autocomplete="tel">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu <span class="required">*</span></label>
+                    <input type="password" name="password" id="reg-password"
+                           placeholder="Tối thiểu 6 ký tự" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                    🌿 Tạo tài khoản
+                </button>
+            </form>
+        </div>
+
+        <p class="auth-footer">
+            Bằng cách đăng ký, bạn đồng ý cùng chúng tôi
+            <span class="text-green">bảo vệ môi trường</span> 🌍
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(tab) {
+    document.getElementById('tab-login').style.display    = tab === 'login'    ? 'block' : 'none';
+    document.getElementById('tab-register').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0) === (tab === 'login'));
+    });
+    // Move indicator
+    const indicator = document.querySelector('.tab-indicator');
+    indicator.style.left  = tab === 'login' ? '4px' : 'calc(50% + 2px)';
+    indicator.style.width = 'calc(50% - 6px)';
+}
+// Init indicator on load
+document.addEventListener('DOMContentLoaded', () => {
+    const activeTab = '{{ tab if tab else "login" }}';
+    const indicator = document.querySelector('.tab-indicator');
+    indicator.style.left  = activeTab === 'register' ? 'calc(50% + 2px)' : '4px';
+    indicator.style.width = 'calc(50% - 6px)';
+});
+</script>
+{% endblock %}

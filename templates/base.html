@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Eco Coin{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ANIMATED ECO BACKGROUND -->
+<div class="eco-bg">
+    <div class="eco-blob blob-1"></div>
+    <div class="eco-blob blob-2"></div>
+    <div class="eco-blob blob-3"></div>
+    <div class="eco-blob blob-4"></div>
+    <div class="eco-grid"></div>
+</div>
+<!-- NAV BAR (chỉ hiện cho app người dùng, không hiện ở màn hình máy) -->
+{% block navbar %}
+<nav class="navbar">
+    <a class="nav-brand" href="{{ url_for('index') }}">
+        <span class="nav-logo">♻️</span>
+        <span>Eco<b>Coin</b></span>
+    </a>
+    {% if session.get('user_id') %}
+    <div class="nav-actions">
+        <span class="nav-user">{{ session.get('username') }}</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-sm btn-ghost">Đăng xuất</a>
+    </div>
+    {% endif %}
+</nav>
+{% endblock %}
+
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

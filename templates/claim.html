@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Nhận thưởng – Eco Coin{% endblock %}
+
+{% block content %}
+<div class="claim-page">
+    <div class="claim-card">
+
+        {% if result == 'success' %}
+        <!-- ✅ THÀNH CÔNG -->
+        <div class="claim-icon success-anim">✅</div>
+        <h2 class="claim-title">Nhận tiền thành công!</h2>
+        <p class="claim-sub">Số tiền đã được cộng vào ví của bạn</p>
+
+        <div class="claim-amount">+{{ amount|currency }}</div>
+
+        <div class="claim-items">
+            <p class="claim-items-title">Chi tiết vật phẩm:</p>
+            {% for key, qty in items.items() %}
+            <div class="claim-item-row">
+                <span>{{ item_prices[key].icon }} {{ item_prices[key].name }}</span>
+                <span><b>× {{ qty }}</b> = {{ (qty * item_prices[key].price)|currency }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="claim-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-full">
+                💳 Xem ví của tôi
+            </a>
+        </div>
+
+        {% elif result == 'used' %}
+        <!-- ⚠️ ĐÃ DÙNG -->
+        <div class="claim-icon">⚠️</div>
+        <h2 class="claim-title">Mã QR đã được sử dụng</h2>
+        <p class="claim-sub">Mỗi mã QR chỉ có thể quét 1 lần duy nhất.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Về ví của tôi</a>
+
+        {% elif result == 'invalid' %}
+        <!-- ❌ KHÔNG HỢP LỆ -->
+        <div class="claim-icon">❌</div>
+        <h2 class="claim-title">Mã QR không hợp lệ</h2>
+        <p class="claim-sub">Mã QR này không tồn tại hoặc đã hết hạn. Vui lòng quét lại mã trên máy.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Về trang chủ</a>
+
+        {% else %}
+        <!-- GENERIC ERROR -->
+        <div class="claim-icon">❓</div>
+        <h2 class="claim-title">Có lỗi xảy ra</h2>
+        <p class="claim-sub">{{ error }}</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Về trang chủ</a>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
