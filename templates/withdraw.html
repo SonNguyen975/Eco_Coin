@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}Rút tiền & Đổi voucher – Eco Coin{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+
+    <!-- HEADER -->
+    <div class="withdraw-header">
+        <a href="{{ url_for('dashboard') }}" class="back-btn">← Quay lại ví</a>
+        <h1 class="withdraw-title">💸 Rút tiền & Đổi voucher</h1>
+        <div class="withdraw-balance-pill">
+            Số dư: <b class="text-green">{{ user['balance']|currency }}</b>
+        </div>
+    </div>
+
+    {% if success %}
+    <!-- THÀNH CÔNG -->
+    <div class="withdraw-success-card">
+        <div class="ws-icon">{{ success.method.icon }}</div>
+        <h2 class="ws-title">Yêu cầu đã được ghi nhận!</h2>
+        <p class="ws-sub">(Đây là mô phỏng – trong thực tế hệ thống sẽ xử lý tự động)</p>
+
+        <div class="ws-detail-box">
+            <div class="ws-row">
+                <span>Phương thức</span>
+                <b>{{ success.method.icon }} {{ success.method.label }}</b>
+            </div>
+            <div class="ws-row">
+                <span>Số EcoCoin đã dùng</span>
+                <b style="color:#ff8a80">-{{ success.amount_coin|currency }}</b>
+            </div>
+            <div class="ws-row">
+                <span>Giá trị thực nhận</span>
+                <b class="text-green">+{{ success.amount_value|currency }}</b>
+            </div>
+            <div class="ws-row">
+                <span>Tài khoản nhận</span>
+                <b>{{ success.account_detail }}</b>
+            </div>
+        </div>
+
+        <p class="ws-balance-after">
+            Số dư còn lại: <span class="text-green">{{ user['balance']|currency }}</span>
+        </p>
+
+        <a href="{{ url_for('withdraw') }}" class="btn btn-primary btn-full" style="margin-top: 16px;">
+            🔄 Rút thêm
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-full" style="margin-top: 10px;">
+            🏠 Về trang ví
+        </a>
+    </div>
+
+    {% else %}
+    <!-- FORM RÚT TIỀN -->
+    {% if error %}
+    <div class="alert alert-danger">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('withdraw') }}" id="withdrawForm">
+
+        <!-- BƯỚC 1: CHỌN PHƯƠNG THỨC -->
+        <div class="withdraw-section">
+            <div class="section-title">① Chọn phương thức</div>
+
+            <div class="method-group-label">🏦 Rút về ngân hàng</div>
+            <div class="method-grid">
+                {% for key, m in methods.items() %}
+                {% if m.type == 'bank' %}
+                <label class="method-card" for="method_{{ key }}">
+                    <input type="radio" name="method" id="method_{{ key }}" value="{{ key }}"
+                           onchange="updateMethodInfo(this)"
+                           data-rate="{{ m.rate }}" data-min="{{ m.min }}"
+                           data-label="{{ m.label }}" data-type="{{ m.type }}"
+                           data-placeholder="Số tài khoản ngân hàng">
+                    <div class="method-card-inner">
+                        <span class="method-icon">{{ m.icon }}</span>
+                        <span class="method-label">{{ m.label }}</span>
+                        <span class="method-sub">Tối thiểu {{ m.min|currency }}</span>
+                    </div>
+                </label>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="method-group-label" style="margin-top: 16px;">🎁 Đổi voucher (nhận thêm 5–10%)</div>
+            <div class="method-grid">
+                {% for key, m in methods.items() %}
+                {% if m.type == 'voucher' %}
+                <label class="method-card" for="method_{{ key }}">
+                    <input type="radio" name="method" id="method_{{ key }}" value="{{ key }}"
+                           onchange="updateMethodInfo(this)"
+                           data-rate="{{ m.rate }}" data-min="{{ m.min }}"
+                           data-label="{{ m.label }}" data-type="{{ m.type }}"
+                           data-placeholder="Tên tài khoản / SĐT liên kết">
+                    <div class="method-card-inner">
+                        <span class="method-icon">{{ m.icon }}</span>
+                        <span class="method-label">{{ m.label }}</span>
+                        <span class="method-sub">×{{ m.rate }} – tối thiểu {{ m.min|currency }}</span>
+                        <span class="method-bonus">+{{ ((m.rate - 1) * 100)|int }}% bonus</span>
+                    </div>
+                </label>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- BƯỚC 2: SỐ TIỀN -->
+        <div class="withdraw-section">
+            <div class="section-title">② Số tiền muốn rút</div>
+            <div class="amount-input-wrap">
+                <input type="number" name="amount" id="amountInput"
+                       placeholder="Nhập số tiền (VNĐ)"
+                       min="0" max="{{ user['balance'] }}"
+                       oninput="calcResult()"
+                       class="amount-input">
+                <button type="button" class="btn-max" onclick="setMax()">Tối đa</button>
+            </div>
+            <div class="quick-amounts">
+                <button type="button" onclick="setAmount(20000)">20.000đ</button>
+                <button type="button" onclick="setAmount(50000)">50.000đ</button>
+                <button type="button" onclick="setAmount(100000)">100.000đ</button>
+                <button type="button" onclick="setAmount(200000)">200.000đ</button>
+            </div>
+            <div class="calc-result" id="calcResult" style="display:none">
+                <span>Bạn sẽ nhận được:</span>
+                <strong class="text-green" id="resultValue">0đ</strong>
+            </div>
+        </div>
+
+        <!-- BƯỚC 3: THÔNG TIN TÀI KHOẢN -->
+        <div class="withdraw-section">
+            <div class="section-title">③ Thông tin tài khoản nhận</div>
+            <input type="text" name="account_detail" id="accountInput"
+                   placeholder="Chọn phương thức trước..."
+                   class="account-input" disabled>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn">
+            💸 Xác nhận rút tiền
+        </button>
+        <p class="withdraw-note">
+            ⚠️ Đây là hệ thống mô phỏng. Tiền sẽ được trừ khỏi ví ngay lập tức để demo.
+        </p>
+    </form>
+    {% endif %}
+
+    <!-- LỊCH SỬ RÚT TIỀN -->
+    {% if history %}
+    <div class="withdraw-section" style="margin-top: 32px;">
+        <div class="section-title">Lịch sử rút tiền</div>
+        <div class="tx-list">
+            {% for w in history %}
+            {% set m_info = methods.get(w['method'], {'icon': '💳', 'label': w['method']}) %}
+            <div class="tx-card tx-direct">
+                <div class="tx-left">
+                    <div class="tx-icon">{{ m_info.icon }}</div>
+                    <div class="tx-info">
+                        <p class="tx-title">{{ m_info.label }}</p>
+                        <p class="tx-detail">{{ w['detail'] }} → nhận {{ w['amount_value']|currency }}</p>
+                        <p class="tx-date">{{ w['created_at']|fmt_date }}</p>
+                    </div>
+                </div>
+                <div class="tx-amount" style="color:#ff8a80">-{{ w['amount_coin']|currency }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentRate = 1.0;
+let currentMin  = 0;
+let maxBalance  = {{ user['balance'] }};
+
+function updateMethodInfo(radio) {
+    currentRate = parseFloat(radio.dataset.rate);
+    currentMin  = parseInt(radio.dataset.min);
+    const placeholder = radio.dataset.placeholder;
+    const accountInput = document.getElementById('accountInput');
+    accountInput.placeholder = placeholder;
+    accountInput.disabled = false;
+    accountInput.focus();
+    calcResult();
+    // Highlight selected card
+    document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
+    radio.closest('.method-card').classList.add('selected');
+}
+
+function calcResult() {
+    const amount = parseInt(document.getElementById('amountInput').value) || 0;
+    const resultEl = document.getElementById('calcResult');
+    const valueEl  = document.getElementById('resultValue');
+    if (amount > 0 && currentRate > 0) {
+        const result = Math.floor(amount * currentRate);
+        const formatted = result.toLocaleString('vi-VN') + 'đ';
+        valueEl.textContent = formatted;
+        resultEl.style.display = 'flex';
+    } else {
+        resultEl.style.display = 'none';
+    }
+}
+
+function setMax() {
+    document.getElementById('amountInput').value = maxBalance;
+    calcResult();
+}
+
+function setAmount(val) {
+    document.getElementById('amountInput').value = val;
+    calcResult();
+}
+</script>
+{% endblock %}

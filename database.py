@@ -71,6 +71,19 @@ if DATABASE_URL:
             )
         ''')
 
+        db.execute('''
+            CREATE TABLE IF NOT EXISTS withdrawals (
+                id           SERIAL PRIMARY KEY,
+                user_id      INTEGER NOT NULL,
+                method       TEXT NOT NULL,
+                amount_coin  INTEGER NOT NULL,
+                amount_value INTEGER NOT NULL,
+                detail       TEXT,
+                created_at   TIMESTAMP DEFAULT NOW(),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+
         db.commit()
         db.close()
         print("[DB] PostgreSQL database khoi tao thanh cong.")
@@ -119,6 +132,19 @@ else:
                 status      TEXT DEFAULT 'pending',
                 created_at  TEXT DEFAULT (datetime('now', 'localtime')),
                 claimed_at  TEXT,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS withdrawals (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id      INTEGER NOT NULL,
+                method       TEXT NOT NULL,
+                amount_coin  INTEGER NOT NULL,
+                amount_value INTEGER NOT NULL,
+                detail       TEXT,
+                created_at   TEXT DEFAULT (datetime('now', 'localtime')),
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ''')

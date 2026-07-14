@@ -343,6 +343,99 @@ def dashboard():
         item_prices=ITEM_PRICES)
 
 # ==============================================================
+# ROUTES – RÚT TIỀN / ĐỔI VOUCHER (MÔ PHỎNG)
+# ==============================================================
+
+# Tỉ lệ quy đổi: (hệ số nhân, số tiền tối thiểu, mô tả nhãn)
+WITHDRAW_METHODS = {
+    'bank_vcb':    {'label': 'Vietcombank',    'icon': '🏦', 'type': 'bank',    'rate': 1.0,  'min': 50000, 'detail': 'Chuyển khoản ngân hàng'},
+    'bank_mb':     {'label': 'MB Bank',        'icon': '🏦', 'type': 'bank',    'rate': 1.0,  'min': 50000, 'detail': 'Chuyển khoản ngân hàng'},
+    'bank_bidv':   {'label': 'BIDV',           'icon': '🏦', 'type': 'bank',    'rate': 1.0,  'min': 50000, 'detail': 'Chuyển khoản ngân hàng'},
+    'voucher_shopee':  {'label': 'Shopee',     'icon': '🛒', 'type': 'voucher', 'rate': 1.1,  'min': 20000, 'detail': 'Voucher mua sắm Shopee'},
+    'voucher_tiktok':  {'label': 'TikTok Shop','icon': '🎵', 'type': 'voucher', 'rate': 1.1,  'min': 20000, 'detail': 'Voucher TikTok Shop'},
+    'voucher_grab':    {'label': 'GrabFood',   'icon': '🛵', 'type': 'voucher', 'rate': 1.05, 'min': 20000, 'detail': 'Voucher đồ ăn Grab'},
+    'voucher_lazada':  {'label': 'Lazada',     'icon': '📦', 'type': 'voucher', 'rate': 1.1,  'min': 20000, 'detail': 'Voucher mua sắm Lazada'},
+}
+
+@app.route('/withdraw', methods=['GET', 'POST'])
+def withdraw():
+    """Trang rút tiền / đổi voucher mô phỏng."""
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+
+    db = get_db()
+    user = db.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+
+    if request.method == 'POST':
+        method_key = request.form.get('method', '')
+        amount_coin = int(request.form.get('amount', 0))
+        account_detail = request.form.get('account_detail', '').strip()
+
+        method = WITHDRAW_METHODS.get(method_key)
+        error = None
+
+        if not method:
+            error = 'Phương thức không hợp lệ!'
+        elif amount_coin < method['min']:
+            error = f"Số tiền tối thiểu là {method['min']:,}đ!".replace(',', '.')
+        elif amount_coin > user['balance']:
+            error = 'Số dư trong ví không đủ!'
+        elif not account_detail:
+            error = 'Vui lòng nhập thông tin tài khoản nhận!'
+
+        if error:
+            history = db.execute(
+                'SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC LIMIT 10',
+                (session['user_id'],)
+            ).fetchall()
+            db.close()
+            return render_template('withdraw.html',
+                user=user, methods=WITHDRAW_METHODS,
+                error=error, history=history)
+
+        # Tính giá trị thực nhận (sau quy đổi)
+        amount_value = int(amount_coin * method['rate'])
+        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Trừ số dư
+        db.execute('UPDATE users SET balance = balance - ? WHERE id = ?',
+                   (amount_coin, session['user_id']))
+
+        # Lưu lịch sử rút
+        db.execute(
+            'INSERT INTO withdrawals (user_id, method, amount_coin, amount_value, detail) VALUES (?, ?, ?, ?, ?)',
+            (session['user_id'], method_key, amount_coin, amount_value, account_detail)
+        )
+        db.commit()
+
+        # Lấy user sau khi trừ
+        updated_user = db.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        history = db.execute(
+            'SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC LIMIT 10',
+            (session['user_id'],)
+        ).fetchall()
+        db.close()
+
+        return render_template('withdraw.html',
+            user=updated_user, methods=WITHDRAW_METHODS,
+            success={
+                'method': method,
+                'amount_coin': amount_coin,
+                'amount_value': amount_value,
+                'account_detail': account_detail,
+            },
+            history=history)
+
+    # GET: hiển thị trang
+    history = db.execute(
+        'SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC LIMIT 10',
+        (session['user_id'],)
+    ).fetchall()
+    db.close()
+    return render_template('withdraw.html',
+        user=user, methods=WITHDRAW_METHODS, history=history)
+
+# ==============================================================
 # ROUTES – NHẬN THƯỞNG QUA QR
 # ==============================================================
 

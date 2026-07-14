@@ -49,7 +49,7 @@
 
     <!-- QUICK ACTIONS -->
     <div class="section-title">Thao tác nhanh</div>
-    <div class="quick-actions">
+    <div class="quick-actions" style="grid-template-columns: repeat(3, 1fr);">
         <a href="{{ url_for('machine') }}" class="action-card action-machine">
             <div class="action-icon">🖥️</div>
             <p>Mở máy Eco Coin</p>
@@ -58,6 +58,10 @@
             <div class="action-icon">📷</div>
             <p>Quét QR nhận tiền</p>
         </div>
+        <a href="{{ url_for('withdraw') }}" class="action-card" style="border-color: rgba(255,193,7,0.3);">
+            <div class="action-icon">💸</div>
+            <p>Rút tiền / Voucher</p>
+        </a>
     </div>
 
     <!-- TRANSACTION HISTORY -->
